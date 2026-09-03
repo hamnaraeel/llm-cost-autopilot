@@ -168,24 +168,71 @@ see [Status](#6-status--whats-not-done-yet).
 
 ## 6. Status — what's not done yet
 
-- **No cloud API keys configured** in this environment, so GPT-4o/GPT-4o-mini
-  and all three Claude models fall back to the deterministic mock provider
-  (or local Ollama, where available) in every demo run so far. The routing
-  and verification logic is fully exercised; the *real* multi-provider cost
-  spread from Phase 1's baseline script has not been re-measured against live
-  cloud pricing.
+- **Cloud keys (OpenAI, Anthropic) are still not configured server-side** in
+  this environment, so those three model tiers fall back to Groq (real,
+  cloud-hosted, fast and cheap) by default — see `config/routing.yaml`. The
+  routing and verification logic has been run against real, priced cloud
+  inference via Groq, not just the offline mock.
 - **The verifier's agreement scorer is a lexical heuristic**, not a real
   LLM-as-judge or task-specific grader (exact-field-match for extraction,
   label-match for classification, etc.) — documented as a known
-  simplification in `autopilot/verifier.py`, and its threshold is calibrated
-  against the offline mock provider's output distribution, not real model
-  outputs.
+  simplification in `autopilot/verifier.py`.
 - **No weekly classifier retraining / feedback loop** from escalation data yet
   (the spec's Phase 3 step 4) — `autopilot/classifier/model.py` exposes
   `reload_classifier()` for this, but nothing calls it on a schedule.
   Explicitly out of scope until real usage data exists.
-- **No Docker/docker-compose**, and no written case-study/portfolio doc yet
-  (Phase 6, steps 2–3).
+- **No streaming support** on `/v1/chat/completions` — `stream: true` returns
+  a clear 400 rather than silently ignoring the flag.
+- **No accounts, per-user usage tracking, or billing** — see §7 below for what
+  exists instead (bring-your-own-key) and what a real multi-tenant version
+  would need.
+
+## 7. Using it as a drop-in for your own app
+
+`POST /v1/chat/completions` matches the OpenAI chat completions request and
+response shape, so pointing an existing `openai` SDK client at this service's
+`base_url` works with no other code changes — the router picks the model, not
+the caller:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="https://<your-deployment>/v1", api_key="unused")
+resp = client.chat.completions.create(
+    model="gpt-4o",  # accepted, ignored -- Autopilot decides what actually answers
+    messages=[{"role": "user", "content": "Summarize this in two sentences: ..."}],
+)
+print(resp.choices[0].message.content)
+print(resp.autopilot)  # extra, namespaced field: tier, cost, escalated, etc.
+```
+
+**Bring your own key.** By default the service uses whichever provider keys
+*it* has configured. To route through your own provider account instead —
+so the operator never pays for your usage — pass one or more headers:
+
+```
+X-OpenAI-Api-Key: sk-...
+X-Anthropic-Api-Key: sk-ant-...
+X-Groq-Api-Key: gsk_...
+```
+
+Each key is used for that one request only and is never logged or stored —
+see `autopilot/pipeline.py`'s `api_keys` parameter and
+`autopilot/providers/__init__.py:get_provider_instance`, which builds an
+uncached provider instance per call rather than touching the shared,
+server-key singleton. A key you supply unlocks routing to that provider even
+if the server itself has none configured for it (`provider_usable()` in
+`autopilot/providers/__init__.py`).
+
+The original prompt-in/rich-metadata-out shape still exists at `POST
+/v1/route`, for inspecting a routing decision directly instead of integrating
+against the OpenAI-compatible shape.
+
+This is the lightweight version of "let other people use this": no accounts,
+no per-user dashboards, no billing — just an OpenAI-compatible endpoint
+anyone can call, optionally with their own key. A real multi-tenant product
+(per-user API keys issued by *this* service, usage quotas, a personal savings
+dashboard, payment) is a materially bigger build and isn't started.
 
 ## Running it
 

@@ -31,14 +31,23 @@ async def run_request(
     routing_config: RoutingConfig | None = None,
     store: LogStore | None = None,
     verify_quality: bool = True,
+    api_keys: dict[str, str] | None = None,
     **send_kwargs,
 ) -> PipelineResult:
+    """`api_keys` (provider name -> caller-supplied key) lets a bring-your-
+    own-key caller reach providers the server itself has no key for; it is
+    used only for this call and never cached or logged.
+    """
     rc = routing_config or get_routing_config()
-    decision = route(prompt, registry, routing_config=rc)
-    primary_response = await send_request(prompt, decision.model, **send_kwargs)
+    decision = route(prompt, registry, routing_config=rc, api_keys=api_keys)
+    primary_response = await send_request(
+        prompt, decision.model, api_key=(api_keys or {}).get(decision.model.provider), **send_kwargs
+    )
 
     if verify_quality:
-        verification = await verify(prompt, primary_response, registry, routing_config=rc)
+        verification = await verify(
+            prompt, primary_response, registry, routing_config=rc, api_keys=api_keys
+        )
     else:
         verification = VerificationResult(
             agreement=1.0, escalated=False, final_response=primary_response,

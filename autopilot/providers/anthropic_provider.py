@@ -9,10 +9,10 @@ from autopilot.schemas import LLMRequest, ProviderError, RawCompletion
 class AnthropicProvider(Provider):
     name = "anthropic"
 
-    def __init__(self) -> None:
+    def __init__(self, api_key: str | None = None) -> None:
         from anthropic import AsyncAnthropic
 
-        self._client = AsyncAnthropic(api_key=config.ANTHROPIC_API_KEY)
+        self._client = AsyncAnthropic(api_key=api_key or config.ANTHROPIC_API_KEY)
 
     @classmethod
     def available(cls) -> bool:

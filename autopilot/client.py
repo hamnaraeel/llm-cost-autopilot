@@ -12,7 +12,7 @@ import asyncio
 import logging
 import time
 
-from autopilot.providers import get_provider, provider_available, unavailable_reason
+from autopilot.providers import get_provider_instance, provider_usable, unavailable_reason
 from autopilot.registry import ModelConfig, ModelRegistry
 from autopilot.schemas import LLMRequest, LLMResponse, ProviderError, Usage
 
@@ -37,12 +37,18 @@ async def send_request(
     max_tokens: int = 1024,
     temperature: float = 0.0,
     max_retries: int = DEFAULT_MAX_RETRIES,
+    api_key: str | None = None,
 ) -> LLMResponse:
     """Send one completion to one model and return a standardized response.
 
     Latency is measured around the provider call only, so it reflects the
     model rather than our own bookkeeping. Retries are attributed to the
     total, because that is what a caller actually waits for.
+
+    `api_key`, when given, is used for this call only -- it builds an
+    uncached provider instance rather than touching the shared, server-key
+    singleton (bring-your-own-key requests must never leak into other
+    callers' requests or persist beyond the one call).
     """
     req = (
         prompt
@@ -52,13 +58,13 @@ async def send_request(
         )
     )
 
-    if not provider_available(model.provider):
+    if not provider_usable(model.provider, {model.provider: api_key} if api_key else None):
         raise ProviderError(
             model.provider,
             f"provider unavailable for model {model.key!r}: {unavailable_reason(model.provider)}",
         )
 
-    provider = get_provider(model.provider)
+    provider = get_provider_instance(model.provider, api_key)
     started = time.perf_counter()
     last_err: ProviderError | None = None
 

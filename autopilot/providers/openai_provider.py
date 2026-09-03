@@ -9,10 +9,10 @@ from autopilot.schemas import LLMRequest, ProviderError, RawCompletion
 class OpenAIProvider(Provider):
     name = "openai"
 
-    def __init__(self) -> None:
+    def __init__(self, api_key: str | None = None) -> None:
         from openai import AsyncOpenAI
 
-        self._client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
+        self._client = AsyncOpenAI(api_key=api_key or config.OPENAI_API_KEY)
 
     @classmethod
     def available(cls) -> bool:

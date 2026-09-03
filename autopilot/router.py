@@ -69,15 +69,24 @@ def reload_routing_config() -> RoutingConfig:
     return _singleton
 
 
-def first_available(keys: list[str], registry: ModelRegistry) -> ModelConfig | None:
-    """First model in `keys` (registry keys, in priority order) that is usable."""
+def first_available(
+    keys: list[str],
+    registry: ModelRegistry,
+    api_keys: dict[str, str] | None = None,
+) -> ModelConfig | None:
+    """First model in `keys` (registry keys, in priority order) that is usable.
+
+    `api_keys` (provider name -> caller-supplied key) makes a provider count
+    as usable even with no server-side key configured for it -- a bring-
+    your-own-key request should reach the provider it brought a key for.
+    """
     for key in keys:
         if key not in registry:
             continue
         model = registry[key]
-        from autopilot.providers import provider_available
+        from autopilot.providers import provider_usable
 
-        if provider_available(model.provider):
+        if provider_usable(model.provider, api_keys):
             return model
     return None
 
@@ -87,6 +96,7 @@ def route(
     registry: ModelRegistry,
     *,
     routing_config: RoutingConfig | None = None,
+    api_keys: dict[str, str] | None = None,
 ) -> RoutingDecision:
     """Classify a prompt and pick the model that should answer it."""
     rc = routing_config or get_routing_config()
@@ -110,7 +120,7 @@ def route(
         )
 
     chain = rc.chain_for(tier)
-    model = first_available(chain, registry)
+    model = first_available(chain, registry, api_keys)
     if model is None:
         # Nothing in the chain is usable -- fall back to whatever is cheapest
         # among available models rather than failing the request outright.

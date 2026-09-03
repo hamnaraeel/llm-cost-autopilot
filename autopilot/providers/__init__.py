@@ -39,6 +39,23 @@ def get_provider(name: str) -> Provider:
     return cls()
 
 
+def get_provider_instance(name: str, api_key: str | None = None) -> Provider:
+    """Like `get_provider`, but builds an uncached instance when `api_key` is
+    given -- a caller-supplied (bring-your-own-key) request must never be
+    cached under the shared singleton, or one user's key would leak into
+    another user's requests.
+    """
+    if api_key is None:
+        return get_provider(name)
+    try:
+        cls = _classes()[name]
+    except KeyError:
+        raise KeyError(
+            f"unknown provider {name!r}; known: {sorted(_classes())}"
+        ) from None
+    return cls(api_key=api_key)
+
+
 def provider_available(name: str) -> bool:
     cls = _classes().get(name)
     if cls is None:
@@ -57,4 +74,21 @@ def unavailable_reason(name: str) -> str | None:
     return cls.unavailable_reason()
 
 
-__all__ = ["Provider", "get_provider", "provider_available", "unavailable_reason"]
+def provider_usable(name: str, api_keys: dict[str, str] | None = None) -> bool:
+    """`provider_available`, but a caller-supplied key for `name` also counts
+    -- a provider the server has no key for is still usable for a request
+    that brings its own (see the X-*-Api-Key headers on /v1/chat/completions).
+    """
+    if api_keys and name in api_keys:
+        return True
+    return provider_available(name)
+
+
+__all__ = [
+    "Provider",
+    "get_provider",
+    "get_provider_instance",
+    "provider_available",
+    "provider_usable",
+    "unavailable_reason",
+]

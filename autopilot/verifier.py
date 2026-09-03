@@ -75,6 +75,7 @@ async def verify(
     *,
     routing_config: RoutingConfig | None = None,
     threshold: float = DEFAULT_THRESHOLD,
+    api_keys: dict[str, str] | None = None,
 ) -> VerificationResult:
     """Optionally re-check `primary_response` against the escalation target."""
     rc = routing_config or get_routing_config()
@@ -89,7 +90,7 @@ async def verify(
             reason="primary model is already an escalation-tier model; skipped verification",
         )
 
-    verifier_model = first_available(escalation_chain, registry)
+    verifier_model = first_available(escalation_chain, registry, api_keys)
     if verifier_model is None:
         return VerificationResult(
             agreement=1.0,
@@ -100,7 +101,9 @@ async def verify(
         )
 
     try:
-        verifier_response = await send_request(prompt, verifier_model)
+        verifier_response = await send_request(
+            prompt, verifier_model, api_key=(api_keys or {}).get(verifier_model.provider)
+        )
     except ProviderError as e:
         # A failed cross-check (rate limit, transient outage, ...) should
         # never discard an otherwise-good primary answer -- keep it and

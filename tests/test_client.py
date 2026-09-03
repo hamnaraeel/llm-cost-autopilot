@@ -63,8 +63,8 @@ async def test_request_id_is_preserved(registry):
 
 async def test_unavailable_provider_raises_with_reason(registry, monkeypatch):
     from autopilot import providers
-    monkeypatch.setattr(providers, "provider_available", lambda name: False)
-    monkeypatch.setattr("autopilot.client.provider_available", lambda name: False)
+    monkeypatch.setattr(providers, "provider_usable", lambda name, api_keys=None: False)
+    monkeypatch.setattr("autopilot.client.provider_usable", lambda name, api_keys=None: False)
     monkeypatch.setattr("autopilot.client.unavailable_reason", lambda name: "no key")
     with pytest.raises(ProviderError, match="no key"):
         await send_request("x", registry["mock-cheap"])

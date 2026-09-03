@@ -19,10 +19,10 @@ _BASE_URL = "https://api.groq.com/openai/v1"
 class GroqProvider(Provider):
     name = "groq"
 
-    def __init__(self) -> None:
+    def __init__(self, api_key: str | None = None) -> None:
         from openai import AsyncOpenAI
 
-        self._client = AsyncOpenAI(api_key=config.GROQ_API_KEY, base_url=_BASE_URL)
+        self._client = AsyncOpenAI(api_key=api_key or config.GROQ_API_KEY, base_url=_BASE_URL)
 
     @classmethod
     def available(cls) -> bool:

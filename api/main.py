@@ -1,8 +1,16 @@
 """Phase 5 -- the FastAPI service.
 
-One completion endpoint. The caller never names a model; the router picks
-one and the response says which. Everything else (models, stats,
-routing-config) exists to inspect or steer that decision, not to bypass it.
+Two completion endpoints. `/v1/chat/completions` is OpenAI-request-shape
+compatible: point an existing `openai` SDK client's `base_url` at this
+service (optionally with `api_key="unused"`, since auth is per-provider
+headers, not this field) and it works as a drop-in -- Autopilot picks the
+model, not the caller. `/v1/route` is the original prompt-in/rich-metadata-
+out shape, kept for direct inspection of a routing decision.
+
+Bring-your-own-key: pass `X-OpenAI-Api-Key` / `X-Anthropic-Api-Key` /
+`X-Groq-Api-Key` to route through *your* provider account instead of the
+server's -- lets someone self-serve without the operator paying for their
+usage. Keys are used for exactly one request and never stored or logged.
 
 Run with:  uvicorn api.main:app --reload --port 8000
 """
@@ -10,13 +18,15 @@ Run with:  uvicorn api.main:app --reload --port 8000
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import yaml
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, ConfigDict, Field
 
 from autopilot import config
 from autopilot.pipeline import run_request
@@ -32,6 +42,17 @@ app = FastAPI(
     version="1.0",
 )
 
+# Meant to be called from other people's apps/browsers with per-request,
+# header-scoped API keys rather than cookies or sessions -- there is no
+# session state a permissive origin could hijack, so a wildcard is a
+# reasonable default here rather than a security hole.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 _registry: ModelRegistry | None = None
 
 
@@ -40,6 +61,22 @@ def registry() -> ModelRegistry:
     if _registry is None:
         _registry = ModelRegistry.load()
     return _registry
+
+
+async def byok_headers(
+    x_openai_api_key: str | None = Header(default=None, alias="X-OpenAI-Api-Key"),
+    x_anthropic_api_key: str | None = Header(default=None, alias="X-Anthropic-Api-Key"),
+    x_groq_api_key: str | None = Header(default=None, alias="X-Groq-Api-Key"),
+) -> dict[str, str]:
+    """Provider name -> caller-supplied key, from the X-*-Api-Key headers."""
+    keys = {}
+    if x_openai_api_key:
+        keys["openai"] = x_openai_api_key
+    if x_anthropic_api_key:
+        keys["anthropic"] = x_anthropic_api_key
+    if x_groq_api_key:
+        keys["groq"] = x_groq_api_key
+    return keys
 
 
 # ---- schemas ----------------------------------------------------------------
@@ -77,6 +114,87 @@ class RoutingConfigUpdate(BaseModel):
     fallback: list[str] | None = None
 
 
+class OAIMessage(BaseModel):
+    role: str
+    content: str
+
+
+class OAIChatRequest(BaseModel):
+    # `model` is accepted (the openai SDK always sends one) and ignored --
+    # the whole point of this service is that the router picks the model,
+    # not the caller. `extra="ignore"` tolerates SDK fields like `top_p`
+    # this service doesn't act on, rather than rejecting the request.
+    model_config = ConfigDict(extra="ignore")
+
+    model: str = "autopilot"
+    messages: list[OAIMessage] = Field(..., min_length=1)
+    max_tokens: int = 1024
+    temperature: float = 0.0
+    stream: bool = False
+
+
+class OAIChoiceMessage(BaseModel):
+    role: str = "assistant"
+    content: str
+
+
+class OAIChoice(BaseModel):
+    index: int = 0
+    message: OAIChoiceMessage
+    finish_reason: str = "stop"
+
+
+class OAIUsage(BaseModel):
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+
+
+class AutopilotMeta(BaseModel):
+    """Non-standard extra info, namespaced so it can't collide with an
+    OpenAI response field a strict client might validate against."""
+
+    complexity_tier: int
+    routed_model: str
+    provider: str
+    escalated: bool
+    agreement_score: float | None
+    cost_usd: float
+    baseline_cost_usd: float
+    used_mock_fallback: bool
+    routing_reason: str
+
+
+class OAIChatResponse(BaseModel):
+    id: str
+    object: str = "chat.completion"
+    created: int
+    model: str
+    choices: list[OAIChoice]
+    usage: OAIUsage
+    autopilot: AutopilotMeta
+
+
+def _messages_to_prompt(messages: list[OAIMessage]) -> tuple[str, str | None]:
+    """Collapse an OpenAI-style message list into the flat (prompt, system)
+    shape the rest of the pipeline speaks. A single user message passes
+    through untouched -- that's the common case and what the classifier was
+    trained on; multi-turn history is rendered as a labeled transcript so
+    context isn't silently dropped, at the cost of being slightly out of the
+    classifier's training distribution for long conversations.
+    """
+    system_parts = [m.content for m in messages if m.role == "system"]
+    system = "\n".join(system_parts) or None
+    convo = [m for m in messages if m.role != "system"]
+    if not convo:
+        raise HTTPException(status_code=400, detail="messages must include at least one non-system message")
+    if len(convo) == 1 and convo[0].role == "user":
+        return convo[0].content, system
+    lines = [f"{'Human' if m.role == 'user' else 'Assistant'}: {m.content}" for m in convo]
+    lines.append("Assistant:")
+    return "\n\n".join(lines), system
+
+
 # ---- endpoints ----------------------------------------------------------------
 
 
@@ -85,8 +203,69 @@ def health() -> dict:
     return {"status": "ok"}
 
 
-@app.post("/v1/chat/completions", response_model=ChatCompletionResponse)
-async def chat_completions(req: ChatCompletionRequest) -> ChatCompletionResponse:
+@app.post("/v1/chat/completions", response_model=OAIChatResponse)
+async def openai_compatible_chat_completions(
+    req: OAIChatRequest,
+    api_keys: dict[str, str] = Depends(byok_headers),
+) -> OAIChatResponse:
+    """Drop-in for `client.chat.completions.create(...)` from the `openai`
+    SDK -- just point `base_url` here. See the module docstring for the
+    bring-your-own-key headers.
+    """
+    if req.stream:
+        # Streaming would need to fail loudly, not silently return a full
+        # response the caller's SSE parser can't make sense of.
+        raise HTTPException(status_code=400, detail="stream=true is not supported yet; retry with stream=false")
+
+    prompt, system = _messages_to_prompt(req.messages)
+    try:
+        result = await run_request(
+            prompt,
+            registry(),
+            verify_quality=True,
+            max_tokens=req.max_tokens,
+            temperature=req.temperature,
+            system=system,
+            api_keys=api_keys or None,
+        )
+    except ProviderError as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+
+    r, d, v = result.response, result.routing, result.verification
+    return OAIChatResponse(
+        id=f"chatcmpl-{r.request_id}",
+        created=int(time.time()),
+        model=r.model_key,
+        choices=[OAIChoice(message=OAIChoiceMessage(content=r.text), finish_reason=r.stop_reason or "stop")],
+        usage=OAIUsage(
+            prompt_tokens=r.usage.input_tokens,
+            completion_tokens=r.usage.output_tokens,
+            total_tokens=r.usage.total_tokens,
+        ),
+        autopilot=AutopilotMeta(
+            complexity_tier=d.tier.value,
+            routed_model=r.model_key,
+            provider=r.provider,
+            escalated=v.escalated,
+            agreement_score=v.agreement,
+            cost_usd=r.cost_usd,
+            baseline_cost_usd=result.baseline_cost_usd,
+            used_mock_fallback=r.provider == "mock",
+            routing_reason=d.reason,
+        ),
+    )
+
+
+@app.post("/v1/route", response_model=ChatCompletionResponse)
+async def route_debug(
+    req: ChatCompletionRequest,
+    api_keys: dict[str, str] = Depends(byok_headers),
+) -> ChatCompletionResponse:
+    """Prompt-in, rich-metadata-out -- for inspecting a routing decision
+    directly rather than integrating against the OpenAI-compatible shape.
+    """
     try:
         result = await run_request(
             req.prompt,
@@ -95,6 +274,7 @@ async def chat_completions(req: ChatCompletionRequest) -> ChatCompletionResponse
             verify_quality=req.verify,
             max_tokens=req.max_tokens,
             temperature=req.temperature,
+            api_keys=api_keys or None,
         )
     except ProviderError as e:
         raise HTTPException(status_code=502, detail=str(e)) from e
