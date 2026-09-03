@@ -21,7 +21,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import json
 import random
 import sys
 import time
@@ -29,33 +28,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import yaml
-
 from autopilot import config
 from autopilot.pipeline import run_request
 from autopilot.registry import ModelRegistry
 from autopilot.schemas import ProviderError
+from autopilot.seed_prompts import load_pool
 from autopilot.store import LogStore
-
-PROMPT_FILES = [
-    config.DATA_DIR / "prompts" / "labeled_tier1.jsonl",
-    config.DATA_DIR / "prompts" / "labeled_tier2.jsonl",
-    config.DATA_DIR / "prompts" / "labeled_tier3.jsonl",
-]
-BASELINE_FILE = config.DATA_DIR / "prompts" / "baseline.yaml"
-
-
-def load_pool() -> list[dict]:
-    pool = []
-    for path in PROMPT_FILES:
-        for line in path.read_text().splitlines():
-            line = line.strip()
-            if line:
-                row = json.loads(line)
-                pool.append({"text": row["text"], "task": row["task"]})
-    for p in yaml.safe_load(BASELINE_FILE.read_text())["prompts"]:
-        pool.append({"text": p["text"], "task": p["task"]})
-    return pool
 
 
 async def main() -> int:

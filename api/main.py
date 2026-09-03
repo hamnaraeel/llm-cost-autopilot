@@ -17,6 +17,9 @@ Run with:  uvicorn api.main:app --reload --port 8000
 
 from __future__ import annotations
 
+import asyncio
+import logging
+import random
 import sys
 import time
 from pathlib import Path
@@ -33,7 +36,14 @@ from autopilot.pipeline import run_request
 from autopilot.registry import ModelRegistry
 from autopilot.router import get_routing_config, reload_routing_config
 from autopilot.schemas import ProviderError
+from autopilot.seed_prompts import load_pool
 from autopilot.store import get_store
+
+log = logging.getLogger(__name__)
+
+# A brand-new deployment (or a wiped volume) should never show a first-time
+# visitor an empty dashboard -- seed a small, real batch on first boot only.
+SEED_ON_EMPTY_N = 20
 
 app = FastAPI(
     title="LLM Cost Autopilot",
@@ -61,6 +71,33 @@ def registry() -> ModelRegistry:
     if _registry is None:
         _registry = ModelRegistry.load()
     return _registry
+
+
+async def _seed_if_empty() -> None:
+    """Best-effort: run a small real batch through the pipeline on first
+    boot so the dashboard has data to show immediately. Fire-and-forget in
+    the background -- never blocks startup, and a failed seed call is
+    swallowed rather than crashing the app over demo traffic.
+    """
+    store = get_store()
+    if store.count() > 0:
+        return
+    pool = load_pool()
+    if not pool:
+        return
+    rng = random.Random(7)
+    batch = [rng.choice(pool) for _ in range(SEED_ON_EMPTY_N)]
+    reg = registry()
+    for item in batch:
+        try:
+            await run_request(item["text"], reg, task=item["task"])
+        except Exception:  # noqa: BLE001 -- one bad seed call must not stop the rest
+            log.warning("seed request failed", exc_info=True)
+
+
+@app.on_event("startup")
+async def _on_startup() -> None:
+    asyncio.create_task(_seed_if_empty())
 
 
 async def byok_headers(
