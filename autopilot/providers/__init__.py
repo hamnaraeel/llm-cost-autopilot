@@ -13,6 +13,7 @@ _CLASSES: dict[str, type[Provider]] = {}
 def _classes() -> dict[str, type[Provider]]:
     if not _CLASSES:
         from autopilot.providers.anthropic_provider import AnthropicProvider
+        from autopilot.providers.groq_provider import GroqProvider
         from autopilot.providers.mock_provider import MockProvider
         from autopilot.providers.ollama_provider import OllamaProvider
         from autopilot.providers.openai_provider import OpenAIProvider
@@ -20,6 +21,7 @@ def _classes() -> dict[str, type[Provider]]:
         _CLASSES.update(
             anthropic=AnthropicProvider,
             openai=OpenAIProvider,
+            groq=GroqProvider,
             ollama=OllamaProvider,
             mock=MockProvider,
         )

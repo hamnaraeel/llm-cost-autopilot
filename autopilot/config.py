@@ -24,6 +24,7 @@ MEASURED_LATENCY_YAML = CONFIG_DIR / "measured_latency.yaml"
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or None
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY") or None
+GROQ_API_KEY = os.getenv("GROQ_API_KEY") or None
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
 ENABLE_MOCK = os.getenv("AUTOPILOT_ENABLE_MOCK", "true").lower() in {"1", "true", "yes"}
 

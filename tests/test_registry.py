@@ -45,7 +45,7 @@ def test_local_models_are_free_but_counted(registry):
 
 def test_cheapest_picks_lowest_combined_price(registry):
     priced = [m for m in registry if not m.is_local]
-    assert registry.cheapest(priced).key == "gpt-4o-mini"
+    assert registry.cheapest(priced).key == "groq-gpt-oss-20b"
 
 
 def test_tier_filters(registry):

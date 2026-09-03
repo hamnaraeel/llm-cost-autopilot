@@ -81,6 +81,37 @@ models:
     max_output_tokens: 16384
     pricing_verified: false
 
+  # ------------------------------- Groq -----------------------------------
+  # Hosted inference for open models on Groq's LPU hardware. OpenAI-compatible
+  # API, generous free tier, and real cloud latency an order of magnitude
+  # below local Ollama on this machine (~1s vs ~50s+). Model catalog and
+  # pricing pulled live from console.groq.com/docs/models -- the llama-3.x
+  # model IDs this repo originally guessed were retired from Groq's catalog;
+  # these are what's actually being served today.
+  - key: groq-gpt-oss-20b
+    provider: groq
+    model_id: openai/gpt-oss-20b
+    display_name: GPT-OSS 20B (Groq)
+    input_cost_per_1m: 0.075
+    output_cost_per_1m: 0.30
+    avg_latency_ms: 600
+    quality_tier: medium
+    context_window: 131072
+    max_output_tokens: 65536
+    pricing_verified: true
+
+  - key: groq-gpt-oss-120b
+    provider: groq
+    model_id: openai/gpt-oss-120b
+    display_name: GPT-OSS 120B (Groq)
+    input_cost_per_1m: 0.15
+    output_cost_per_1m: 0.60
+    avg_latency_ms: 900
+    quality_tier: high
+    context_window: 131072
+    max_output_tokens: 65536
+    pricing_verified: true
+
   # ------------------------------ Ollama ----------------------------------
   # Marginal cost is zero, but latency is real and quality is the constraint.
   - key: llama3.1-local

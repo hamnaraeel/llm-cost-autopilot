@@ -14,18 +14,18 @@ version: 1
 tiers:
   1:  # simple -- mechanical, cheapest model available
     name: simple
-    primary: mock-cheap
-    fallback: [claude-haiku-4-5, llama3.2-1b-local, gpt-4o-mini]
+    primary: claude-haiku-4-5
+    fallback: [gpt-4o-mini, groq-gpt-oss-20b, llama3.2-1b-local, mock-cheap]
 
   2:  # moderate -- condensation/classification, mid-tier model
     name: moderate
     primary: gpt-4o-mini
-    fallback: [claude-haiku-4-5, llama3.1-local, mock-cheap]
+    fallback: [claude-haiku-4-5, groq-gpt-oss-20b, llama3.1-local, mock-cheap]
 
   3:  # complex -- multi-step reasoning/judgment, highest quality
     name: complex
     primary: claude-opus-5
-    fallback: [gpt-4o, claude-sonnet-5, mock-premium]
+    fallback: [gpt-4o, claude-sonnet-5, groq-gpt-oss-120b, llama3.1-local, mock-premium]
 
 escalation_target: claude-opus-5
 

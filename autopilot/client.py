@@ -18,8 +18,10 @@ from autopilot.schemas import LLMRequest, LLMResponse, ProviderError, Usage
 
 log = logging.getLogger(__name__)
 
-DEFAULT_MAX_RETRIES = 2
-_BACKOFF_BASE_S = 0.75
+DEFAULT_MAX_RETRIES = 4
+# 1, 2, 4, 8s -- enough to clear a real provider's per-minute rate-limit
+# window (Groq's free tier reports waits up to ~8s) without retrying forever.
+_BACKOFF_BASE_S = 1.0
 
 
 def _estimate_tokens(text: str) -> int:

@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from autopilot.client import send_request
 from autopilot.registry import ModelRegistry
 from autopilot.router import RoutingConfig, get_routing_config, first_available
-from autopilot.schemas import ComplexityTier, LLMResponse
+from autopilot.schemas import ComplexityTier, LLMResponse, ProviderError
 
 _WORD_RE = re.compile(r"[a-z0-9']+")
 
@@ -99,7 +99,20 @@ async def verify(
             reason="no escalation-tier model available; verification skipped",
         )
 
-    verifier_response = await send_request(prompt, verifier_model)
+    try:
+        verifier_response = await send_request(prompt, verifier_model)
+    except ProviderError as e:
+        # A failed cross-check (rate limit, transient outage, ...) should
+        # never discard an otherwise-good primary answer -- keep it and
+        # record that verification couldn't run.
+        return VerificationResult(
+            agreement=1.0,
+            escalated=False,
+            final_response=primary_response,
+            verifier_response=None,
+            reason=f"verifier call to {verifier_model.key} failed ({e}); kept primary unverified",
+        )
+
     agreement = score_agreement(primary_response.text, verifier_response.text)
     escalated = agreement < threshold
 
