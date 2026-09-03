@@ -21,6 +21,7 @@ joblib>=1.4
 # --- dashboard (phase 4) ---
 streamlit>=1.38
 altair>=5.3
+watchdog>=5.0   # lets Streamlit auto-reload on file changes instead of serving stale code
 
 # --- dev ---
 pytest>=8.3

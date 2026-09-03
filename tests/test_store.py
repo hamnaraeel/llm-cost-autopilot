@@ -23,6 +23,7 @@ def _entry(**overrides) -> RequestLog:
         routed_model_key="mock-cheap",
         routed_provider="mock",
         final_model_key="mock-cheap",
+        final_provider="mock",
         escalated=False,
         input_tokens=10,
         output_tokens=20,
@@ -59,3 +60,11 @@ def test_empty_summary_has_zeroed_fields(store):
     s = store.summary()
     assert s["requests"] == 0
     assert s["savings_pct"] == 0.0
+    assert s["mock_fallback_count"] == 0
+
+
+def test_summary_flags_mock_fallback_usage(store):
+    store.log(_entry(request_id="r1", final_provider="groq"))
+    store.log(_entry(request_id="r2", final_provider="mock"))
+    s = store.summary()
+    assert s["mock_fallback_count"] == 1

@@ -64,6 +64,7 @@ async def run_request(
             routed_model_key=decision.model.key,
             routed_provider=decision.model.provider,
             final_model_key=final.model_key,
+            final_provider=final.provider,
             escalated=verification.escalated,
             agreement_score=verification.agreement,
             input_tokens=final.usage.input_tokens,

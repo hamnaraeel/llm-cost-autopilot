@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS requests (
     routed_model_key        TEXT NOT NULL,
     routed_provider         TEXT NOT NULL,
     final_model_key         TEXT NOT NULL,
+    final_provider          TEXT NOT NULL,
     escalated              INTEGER NOT NULL,
     agreement_score         REAL,
     input_tokens           INTEGER NOT NULL,
@@ -60,6 +61,7 @@ class RequestLog:
     routed_model_key: str
     routed_provider: str
     final_model_key: str
+    final_provider: str
     escalated: bool
     input_tokens: int
     output_tokens: int
@@ -84,6 +86,13 @@ class LogStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with self._conn() as conn:
             conn.executescript(SCHEMA)
+            self._migrate(conn)
+
+    def _migrate(self, conn: sqlite3.Connection) -> None:
+        """Add columns introduced after a DB already existed on disk."""
+        existing = {row[1] for row in conn.execute("PRAGMA table_info(requests)")}
+        if "final_provider" not in existing:
+            conn.execute("ALTER TABLE requests ADD COLUMN final_provider TEXT NOT NULL DEFAULT 'unknown'")
 
     @contextmanager
     def _conn(self):
@@ -125,12 +134,17 @@ class LogStore:
                 "requests": 0, "total_cost_usd": 0.0, "baseline_cost_usd": 0.0,
                 "savings_usd": 0.0, "savings_pct": 0.0, "escalation_rate": 0.0,
                 "avg_agreement": None, "model_distribution": {}, "tier_distribution": {},
+                "mock_fallback_count": 0,
             }
         total_cost = sum(r["cost_usd"] for r in rows)
         baseline_cost = sum(r["baseline_cost_usd"] for r in rows)
         savings = baseline_cost - total_cost
         escalations = sum(r["escalated"] for r in rows)
         agreements = [r["agreement_score"] for r in rows if r["agreement_score"] is not None]
+        # Real providers were unreachable and the request fell all the way
+        # through to the offline placeholder -- should be rare-to-never;
+        # surfaced explicitly rather than left to blend into "final model".
+        mock_fallback_count = sum(1 for r in rows if r["final_provider"] == "mock")
 
         model_dist: dict[str, int] = {}
         tier_dist: dict[int, int] = {}
@@ -148,6 +162,7 @@ class LogStore:
             "avg_agreement": round(sum(agreements) / len(agreements), 4) if agreements else None,
             "model_distribution": model_dist,
             "tier_distribution": tier_dist,
+            "mock_fallback_count": mock_fallback_count,
         }
 
 

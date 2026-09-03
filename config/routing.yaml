@@ -13,16 +13,24 @@ version: 1
 
 tiers:
   1:  # simple -- mechanical, cheapest model available
+    # No mock fallback here: Groq + local Ollama are reliable enough real
+    # options that a request should fail loudly rather than silently
+    # degrade to placeholder text if every real provider is down.
     name: simple
     primary: claude-haiku-4-5
-    fallback: [gpt-4o-mini, groq-gpt-oss-20b, llama3.2-1b-local, mock-cheap]
+    fallback: [gpt-4o-mini, groq-gpt-oss-20b, llama3.2-1b-local]
 
   2:  # moderate -- condensation/classification, mid-tier model
     name: moderate
     primary: gpt-4o-mini
-    fallback: [claude-haiku-4-5, groq-gpt-oss-20b, llama3.1-local, mock-cheap]
+    fallback: [claude-haiku-4-5, groq-gpt-oss-20b, llama3.1-local]
 
   3:  # complex -- multi-step reasoning/judgment, highest quality
+    # mock-premium stays as the last-resort fallback only here: tier 3 is
+    # the one tier with no free real "high quality" option once cloud keys
+    # and Groq are both unavailable. Any request that actually lands on it
+    # is flagged (provider == "mock") in the store, API response, and
+    # dashboard -- it should be rare-to-never, not silent.
     name: complex
     primary: claude-opus-5
     fallback: [gpt-4o, claude-sonnet-5, groq-gpt-oss-120b, llama3.1-local, mock-premium]

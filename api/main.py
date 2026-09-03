@@ -58,6 +58,7 @@ class ChatCompletionResponse(BaseModel):
     request_id: str
     model_key: str
     provider: str
+    used_mock_fallback: bool
     complexity_tier: int
     classifier_confidence: float
     escalated: bool
@@ -106,6 +107,7 @@ async def chat_completions(req: ChatCompletionRequest) -> ChatCompletionResponse
         request_id=r.request_id,
         model_key=r.model_key,
         provider=r.provider,
+        used_mock_fallback=r.provider == "mock",
         complexity_tier=d.tier.value,
         classifier_confidence=d.confidence,
         escalated=v.escalated,

@@ -52,6 +52,20 @@ rows = store.all_rows()
 df = pd.DataFrame(rows)
 df["created_at_dt"] = pd.to_datetime(df["created_at"], unit="s")
 
+# ---- mock-fallback flag -------------------------------------------------------
+# mock-* is only reachable as tier 3's last-resort fallback (see
+# config/routing.yaml) -- every real provider was unreachable. Status colors
+# carry an icon + label, never color alone, per the status-palette convention.
+mock_n = summary["mock_fallback_count"]
+if mock_n > 0:
+    st.error(
+        f"⚠️ {mock_n} request{'s' if mock_n != 1 else ''} fell all the way through to the "
+        "offline mock provider — every real model (cloud, Groq, local Ollama) was "
+        "unreachable for that request. Answers for those rows are placeholder text, not real."
+    )
+else:
+    st.success("✅ No requests hit the mock fallback — every answer above came from a real model.")
+
 # ---- the money shot ---------------------------------------------------------
 st.divider()
 m1, m2, m3 = st.columns([2, 1, 1])
@@ -206,6 +220,6 @@ st.dataframe(pd.DataFrame(route_rows), hide_index=True, use_container_width=True
 st.subheader("Recent requests")
 recent = df.sort_values("created_at_dt", ascending=False).head(50)[
     ["created_at_dt", "task", "complexity_tier", "routed_model_key", "final_model_key",
-     "escalated", "agreement_score", "cost_usd", "latency_ms", "prompt_preview"]
+     "final_provider", "escalated", "agreement_score", "cost_usd", "latency_ms", "prompt_preview"]
 ]
 st.dataframe(recent, hide_index=True, use_container_width=True)
