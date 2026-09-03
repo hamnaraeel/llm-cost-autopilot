@@ -1,0 +1,35 @@
+# ---------------------------------------------------------------------------
+# Tier -> model routing map (Phase 2, step 4).
+#
+# Kept separate from models.yaml on purpose: swapping which model handles a
+# tier should never require touching pricing/latency data, and vice versa.
+#
+# `primary` is who normally answers. `escalation_target` is who the Phase 3
+# verifier re-asks when the primary's answer looks wrong -- always the
+# highest-quality model available, regardless of tier.
+# ---------------------------------------------------------------------------
+
+version: 1
+
+tiers:
+  1:  # simple -- mechanical, cheapest model available
+    name: simple
+    primary: mock-cheap
+    fallback: [claude-haiku-4-5, llama3.2-1b-local, gpt-4o-mini]
+
+  2:  # moderate -- condensation/classification, mid-tier model
+    name: moderate
+    primary: gpt-4o-mini
+    fallback: [claude-haiku-4-5, llama3.1-local, mock-cheap]
+
+  3:  # complex -- multi-step reasoning/judgment, highest quality
+    name: complex
+    primary: claude-opus-5
+    fallback: [gpt-4o, claude-sonnet-5, mock-premium]
+
+escalation_target: claude-opus-5
+
+# Below this confidence, the router falls back to the next tier up rather
+# than trusting a shaky classification -- cheap-and-wrong costs more (via
+# escalation + user friction) than moderate-and-right.
+min_confidence: 0.45
