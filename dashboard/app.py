@@ -13,13 +13,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import asyncio
+
 import altair as alt
 import pandas as pd
 import streamlit as st
 
+from autopilot.pipeline import run_request
 from autopilot.registry import ModelRegistry
 from autopilot.router import get_routing_config
 from autopilot.store import get_store
+
+
+@st.cache_resource
+def _registry() -> ModelRegistry:
+    return ModelRegistry.load()
 
 # Fixed-order categorical palette (dataviz skill reference instance) --
 # assigned by position, never cycled or re-sorted by value.
@@ -37,6 +45,67 @@ st.caption(
     "A complexity-routed LLM gateway: cheap models handle easy requests, expensive "
     "models handle hard ones, and an async verifier catches the cheap model when it's wrong."
 )
+
+# ---- try it live -------------------------------------------------------------
+# Runs through the exact same pipeline the API uses. Works immediately with
+# this deployment's own keys -- no setup needed for the operator -- and a
+# visitor can optionally drop in their own provider key to run it on their
+# own account instead, without needing to write any code.
+st.subheader("🚀 Try it now")
+st.caption(
+    "Goes through the real routing pipeline -- classifier, model choice, cost, "
+    "and verification -- not a mockup. Uses this deployment's own configured keys "
+    "by default."
+)
+
+with st.expander("Use your own API key instead (optional)"):
+    st.caption(
+        "Route this one request through your own provider account so the operator "
+        "never pays for it. Used only for the request below, in this browser "
+        "session -- never stored or logged."
+    )
+    byok_cols = st.columns(3)
+    user_openai_key = byok_cols[0].text_input("OpenAI key", type="password", key="try_openai_key")
+    user_anthropic_key = byok_cols[1].text_input("Anthropic key", type="password", key="try_anthropic_key")
+    user_groq_key = byok_cols[2].text_input("Groq key", type="password", key="try_groq_key")
+
+try_prompt = st.text_area(
+    "Prompt",
+    value="Summarize this in two sentences: The city council voted 7-4 to approve the "
+    "transit levy after a three-hour hearing.",
+    height=90,
+    key="try_prompt",
+)
+
+if st.button("Run", type="primary"):
+    api_keys = {
+        k: v
+        for k, v in {
+            "openai": user_openai_key,
+            "anthropic": user_anthropic_key,
+            "groq": user_groq_key,
+        }.items()
+        if v
+    }
+    with st.spinner("Routing..."):
+        try:
+            result = asyncio.run(
+                run_request(try_prompt, _registry(), task="dashboard_try_it", api_keys=api_keys or None)
+            )
+        except Exception as e:  # noqa: BLE001 -- surface any failure to the visitor, not just ProviderError
+            st.error(f"Request failed: {e}")
+        else:
+            r, d, v = result.response, result.routing, result.verification
+            st.success(r.text)
+            out_cols = st.columns(5)
+            out_cols[0].metric("Model used", r.model_key)
+            out_cols[1].metric("Complexity tier", d.tier.value)
+            out_cols[2].metric("Cost", f"${r.cost_usd:.6f}")
+            out_cols[3].metric("Escalated", "Yes" if v.escalated else "No")
+            out_cols[4].metric("Latency", f"{r.latency_ms:.0f} ms")
+            st.caption(d.reason)
+
+st.divider()
 
 # ---- "use this yourself" -----------------------------------------------------
 # The whole point of the lightweight product: an OpenAI-SDK-compatible
