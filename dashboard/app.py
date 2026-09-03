@@ -38,6 +38,52 @@ st.caption(
     "models handle hard ones, and an async verifier catches the cheap model when it's wrong."
 )
 
+# ---- "use this yourself" -----------------------------------------------------
+# The whole point of the lightweight product: an OpenAI-SDK-compatible
+# endpoint anyone can point their own app at. Shown unconditionally (even
+# before any requests exist) since a first-time visitor needs this most.
+try:
+    _host = st.context.headers.get("host", "localhost:8501")
+except Exception:
+    _host = "localhost:8501"
+_scheme = "http" if "localhost" in _host or "127.0.0.1" in _host else "https"
+base_url = f"{_scheme}://{_host}/v1"
+
+with st.expander("🔌 Use this as your own AI gateway", expanded=True):
+    st.markdown(
+        "Point an existing `openai` SDK client at this service's `base_url` — "
+        "no other code changes needed. The router picks the model; the `model` "
+        "field you pass is accepted but ignored."
+    )
+    st.code(
+        f'''from openai import OpenAI
+
+client = OpenAI(base_url="{base_url}", api_key="unused")
+resp = client.chat.completions.create(
+    model="gpt-4o",  # accepted, ignored -- Autopilot decides what actually answers
+    messages=[{{"role": "user", "content": "Summarize this in two sentences: ..."}}],
+)
+print(resp.choices[0].message.content)
+print(resp.autopilot)  # extra field: tier, cost, escalated, etc.''',
+        language="python",
+    )
+    st.markdown(
+        "**Bring your own key** — route through *your* provider account instead of "
+        "this deployment's, so the operator never pays for your usage. Pass one or "
+        "more headers; each key is used for one request only and never stored:"
+    )
+    st.code(
+        "X-OpenAI-Api-Key: sk-...\n"
+        "X-Anthropic-Api-Key: sk-ant-...\n"
+        "X-Groq-Api-Key: gsk_...",
+        language="text",
+    )
+    docs_url = f"{base_url.rsplit('/v1', 1)[0]}/docs"
+    st.caption(
+        f"Full API docs: [{docs_url}]({docs_url}) · "
+        "Rich-metadata debug shape (prompt-in instead of messages-in): `POST /v1/route`"
+    )
+
 store = get_store()
 summary = store.summary()
 
