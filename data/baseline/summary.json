@@ -1,0 +1,58 @@
+{
+  "llama3.1-local": {
+    "display_name": "Llama 3.1 8B (local)",
+    "provider": "ollama",
+    "quality_tier": "medium",
+    "calls": 10,
+    "ok": 6,
+    "errors": 4,
+    "total_cost_usd": 0.0,
+    "avg_cost_usd": 0.0,
+    "p50_latency_ms": 211854.7,
+    "p95_latency_ms": 531678.2,
+    "avg_input_tokens": 62.2,
+    "avg_output_tokens": 32.5
+  },
+  "llama3.2-1b-local": {
+    "display_name": "Llama 3.2 1B (local)",
+    "provider": "ollama",
+    "quality_tier": "low",
+    "calls": 10,
+    "ok": 10,
+    "errors": 0,
+    "total_cost_usd": 0.0,
+    "avg_cost_usd": 0.0,
+    "p50_latency_ms": 75115.1,
+    "p95_latency_ms": 274636.0,
+    "avg_input_tokens": 80.1,
+    "avg_output_tokens": 104.9
+  },
+  "mock-premium": {
+    "display_name": "Mock Premium (offline)",
+    "provider": "mock",
+    "quality_tier": "high",
+    "calls": 10,
+    "ok": 10,
+    "errors": 0,
+    "total_cost_usd": 0.09164,
+    "avg_cost_usd": 0.009164,
+    "p50_latency_ms": 896.6,
+    "p95_latency_ms": 973.8,
+    "avg_input_tokens": 53.8,
+    "avg_output_tokens": 355.8
+  },
+  "mock-cheap": {
+    "display_name": "Mock Cheap (offline)",
+    "provider": "mock",
+    "quality_tier": "low",
+    "calls": 10,
+    "ok": 10,
+    "errors": 0,
+    "total_cost_usd": 0.000862,
+    "avg_cost_usd": 8.619e-05,
+    "p50_latency_ms": 261.8,
+    "p95_latency_ms": 289.7,
+    "avg_input_tokens": 53.8,
+    "avg_output_tokens": 130.2
+  }
+}

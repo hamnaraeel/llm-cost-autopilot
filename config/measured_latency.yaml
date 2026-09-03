@@ -1,0 +1,7 @@
+generated_at: '2026-09-03T18:52:02'
+note: Written by scripts/phase1_baseline.py; overrides avg_latency_ms in models.yaml.
+p50_latency_ms:
+  llama3.1-local: 211854.7
+  llama3.2-1b-local: 75115.1
+  mock-premium: 896.6
+  mock-cheap: 261.8

@@ -1,0 +1,135 @@
+# ---------------------------------------------------------------------------
+# Model registry.
+#
+# Costs are USD per 1,000,000 tokens -- the unit every provider publishes.
+# The registry converts to per-token internally so cost math never carries a
+# hand-typed 1e-6 around the codebase.
+#
+# `avg_latency_ms` is a SEED value only. scripts/phase1_baseline.py overwrites
+# these with measured p50s from your own machine/region (see
+# config/measured_latency.yaml, which is layered on top at load time).
+#
+# Pricing provenance:
+#   anthropic -- claude-api skill pricing table, cached 2026-06-24.
+#   openai    -- public list pricing; VERIFY before quoting savings numbers.
+#   ollama    -- local inference, $0 marginal cost by definition.
+# ---------------------------------------------------------------------------
+
+version: 1
+
+models:
+  # ---------------------------- Anthropic ---------------------------------
+  - key: claude-opus-5
+    provider: anthropic
+    model_id: claude-opus-5
+    display_name: Claude Opus 5
+    input_cost_per_1m: 5.00
+    output_cost_per_1m: 25.00
+    avg_latency_ms: 6000
+    quality_tier: high
+    context_window: 1000000
+    max_output_tokens: 64000
+    pricing_verified: true
+    notes: Reference model. Used as the LLM-as-judge and the escalation target.
+
+  - key: claude-sonnet-5
+    provider: anthropic
+    model_id: claude-sonnet-5
+    display_name: Claude Sonnet 5
+    input_cost_per_1m: 2.00
+    output_cost_per_1m: 10.00
+    avg_latency_ms: 3200
+    quality_tier: medium
+    context_window: 1000000
+    max_output_tokens: 64000
+    pricing_verified: true
+
+  - key: claude-haiku-4-5
+    provider: anthropic
+    model_id: claude-haiku-4-5
+    display_name: Claude Haiku 4.5
+    input_cost_per_1m: 1.00
+    output_cost_per_1m: 5.00
+    avg_latency_ms: 1400
+    quality_tier: low
+    context_window: 200000
+    max_output_tokens: 8192
+    pricing_verified: true
+
+  # ------------------------------ OpenAI ----------------------------------
+  - key: gpt-4o
+    provider: openai
+    model_id: gpt-4o
+    display_name: GPT-4o
+    input_cost_per_1m: 2.50
+    output_cost_per_1m: 10.00
+    avg_latency_ms: 2800
+    quality_tier: high
+    context_window: 128000
+    max_output_tokens: 16384
+    pricing_verified: false
+
+  - key: gpt-4o-mini
+    provider: openai
+    model_id: gpt-4o-mini
+    display_name: GPT-4o mini
+    input_cost_per_1m: 0.15
+    output_cost_per_1m: 0.60
+    avg_latency_ms: 1300
+    quality_tier: medium
+    context_window: 128000
+    max_output_tokens: 16384
+    pricing_verified: false
+
+  # ------------------------------ Ollama ----------------------------------
+  # Marginal cost is zero, but latency is real and quality is the constraint.
+  - key: llama3.1-local
+    provider: ollama
+    model_id: llama3.1:latest
+    display_name: Llama 3.1 8B (local)
+    input_cost_per_1m: 0.0
+    output_cost_per_1m: 0.0
+    avg_latency_ms: 4500
+    quality_tier: medium
+    context_window: 128000
+    max_output_tokens: 4096
+    pricing_verified: true
+
+  - key: llama3.2-1b-local
+    provider: ollama
+    model_id: llama3.2:1b
+    display_name: Llama 3.2 1B (local)
+    input_cost_per_1m: 0.0
+    output_cost_per_1m: 0.0
+    avg_latency_ms: 900
+    quality_tier: low
+    context_window: 128000
+    max_output_tokens: 4096
+    pricing_verified: true
+
+  # ------------------------------- Mock -----------------------------------
+  # Deterministic, offline. Priced like a mid-tier cloud model so that cost
+  # dashboards look realistic when running the pipeline without API keys.
+  - key: mock-premium
+    provider: mock
+    model_id: mock-premium
+    display_name: Mock Premium (offline)
+    input_cost_per_1m: 5.00
+    output_cost_per_1m: 25.00
+    avg_latency_ms: 900
+    quality_tier: high
+    context_window: 200000
+    max_output_tokens: 4096
+    pricing_verified: true
+
+  - key: mock-cheap
+    provider: mock
+    model_id: mock-cheap
+    display_name: Mock Cheap (offline)
+    input_cost_per_1m: 0.15
+    output_cost_per_1m: 0.60
+    avg_latency_ms: 250
+    quality_tier: low
+    context_window: 128000
+    max_output_tokens: 4096
+    pricing_verified: true

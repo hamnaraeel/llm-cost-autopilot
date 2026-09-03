@@ -1,0 +1,90 @@
+# The 10 fixed prompts used to baseline every model in the registry.
+# Deliberately spread across all three complexity tiers so the Phase 1 numbers
+# double as evidence for the Phase 2 routing map.
+
+prompts:
+  - id: b01
+    tier: 1
+    task: extraction
+    text: |
+      Extract the invoice number, date, and total from this text. Reply with only JSON.
+      "Invoice #INV-4471 issued 2025-03-14 to Nordwind GmbH. Amount due: EUR 1,240.50."
+
+  - id: b02
+    tier: 1
+    task: reformat
+    text: |
+      Convert this list to a comma-separated line, alphabetized:
+      banana
+      apple
+      cherry
+      date
+
+  - id: b03
+    tier: 1
+    task: closed_qa
+    text: |
+      Context: The office is open Monday through Thursday, 9am to 5pm, and closed on Fridays.
+      Question: Is the office open on Friday afternoon? Answer in one sentence.
+
+  - id: b04
+    tier: 2
+    task: summarization
+    text: |
+      Summarize the following in exactly two sentences:
+      A regional grocery chain replaced its manual reordering process with a demand-forecasting
+      system. Stockouts fell 31% in the first quarter, but staff reported the system over-ordered
+      perishables during holiday weeks, leading to a 6% increase in spoilage costs. Management is
+      now evaluating whether to add a manual override for holiday periods.
+
+  - id: b05
+    tier: 2
+    task: classification
+    text: |
+      Classify this support ticket into exactly one of: BILLING, BUG, FEATURE_REQUEST, ACCOUNT.
+      Reply with the label only.
+      "I was charged twice for my March subscription and the second charge hasn't been refunded."
+
+  - id: b06
+    tier: 2
+    task: structured_analysis
+    text: |
+      Given these quarterly figures, identify the single largest driver of margin change and
+      state it in under 40 words. Revenue: Q1 4.2M, Q2 4.4M. COGS: Q1 2.1M, Q2 2.6M.
+      Opex: Q1 1.4M, Q2 1.35M.
+
+  - id: b07
+    tier: 3
+    task: multi_step_reasoning
+    text: |
+      A train leaves station A at 9:00am traveling 60 km/h toward station B, 210 km away.
+      A second train leaves B at 9:30am traveling toward A at 90 km/h. At what clock time do
+      they meet, and how far from A? Show your reasoning step by step, then state the answer.
+
+  - id: b08
+    tier: 3
+    task: nuanced_judgment
+    text: |
+      A junior engineer shipped a hotfix directly to production at 2am without review, which
+      resolved a customer-facing outage but bypassed the team's change process. Write a short
+      assessment (under 150 words) weighing the tradeoffs, and recommend what the team lead
+      should do at the next retro.
+
+  - id: b09
+    tier: 3
+    task: creative_generation
+    text: |
+      Write a 4-line product tagline set for a note-taking app whose distinguishing feature is
+      that it deletes notes you never revisit. Each line must be under 10 words and none may
+      use the words "simple", "smart", or "effortless".
+
+  - id: b10
+    tier: 3
+    task: code_reasoning
+    text: |
+      This Python function is supposed to return the second-largest distinct value in a list,
+      or None if there isn't one. Identify every bug and give a corrected version.
+
+      def second_largest(nums):
+          nums.sort()
+          return nums[-2]

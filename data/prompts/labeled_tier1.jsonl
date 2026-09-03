@@ -1,0 +1,71 @@
+{"tier":1,"task":"extraction","text":"Extract the order number and shipping city from this line and return JSON: \"Order 88213 dispatched to Rotterdam on 12 May.\""}
+{"tier":1,"task":"extraction","text":"Pull out every email address in the following text:\nContact ana@vellum.io for billing, or ops-team@vellum.io for anything technical. Legacy address support@vellum.co is retired."}
+{"tier":1,"task":"extraction","text":"From this sentence, what is the dollar amount? \"The refund of $412.90 was processed on Tuesday.\""}
+{"tier":1,"task":"extraction","text":"List the three product SKUs mentioned here: SKU-4410 (blue), SKU-4411 (green), and SKU-4419 (discontinued)."}
+{"tier":1,"task":"extraction","text":"Context: Flight BA271 departs Heathrow at 14:05 and arrives in Chicago at 16:50 local time.\nWhat is the arrival time?"}
+{"tier":1,"task":"extraction","text":"Return only the phone number from: \"You can reach the clinic at (503) 555-0142 between 8 and 4.\""}
+{"tier":1,"task":"extraction","text":"Given this row, output the customer name as a single string: id=7712 | name=Priya Raghavan | plan=teams | seats=14"}
+{"tier":1,"task":"extraction","text":"What model number is referenced here? \"Replace the failed unit with a Konig HX-9 before Friday.\""}
+{"tier":1,"task":"extraction","text":"Extract all four-digit years from this paragraph:\nThe firm was founded in 1974, restructured in 1998, and taken public in 2011 after a failed attempt in 2009."}
+{"tier":1,"task":"extraction","text":"Give me the street address only:\nDeliveries go to 88 Warren Street, Suite 3B, Newark NJ 07102. Do not use the mailing PO box."}
+{"tier":1,"task":"extraction","text":"Read this log line and report the HTTP status code: 10.0.4.19 - - [14/Mar/2025:09:11:02] \"GET /api/v1/users HTTP/1.1\" 503 217"}
+{"tier":1,"task":"extraction","text":"From the invoice text below, output JSON with keys vendor, total, due_date.\nVendor: Hallam Print Co.\nTotal: 682.00 GBP\nDue: 2025-04-30"}
+{"tier":1,"task":"reformat","text":"Rewrite these names in Last, First order:\nMaria Okonkwo\nDaniel Weiss\nSofia Ferrari"}
+{"tier":1,"task":"reformat","text":"Convert this to a single comma-separated line: red\\nblue\\ngreen\\nyellow"}
+{"tier":1,"task":"reformat","text":"Turn the following key-value pairs into valid JSON: name=widget, qty=40, warehouse=NE2"}
+{"tier":1,"task":"reformat","text":"Change every date below from DD/MM/YYYY to YYYY-MM-DD:\n03/11/2024\n17/01/2025\n29/06/2023"}
+{"tier":1,"task":"reformat","text":"Put this list in alphabetical order and number it:\nzinc\niron\ncopper\naluminium"}
+{"tier":1,"task":"reformat","text":"Convert these bullet points into a markdown table with columns Item and Price.\n- Chair, 89\n- Desk, 240\n- Lamp, 35"}
+{"tier":1,"task":"reformat","text":"Make this sentence title case: the quarterly board review has been postponed"}
+{"tier":1,"task":"reformat","text":"Reverse the order of these lines:\nfirst\nsecond\nthird\nfourth"}
+{"tier":1,"task":"reformat","text":"Strip all HTML tags from this string and return the plain text: <p>Your <b>order</b> has shipped.</p>"}
+{"tier":1,"task":"reformat","text":"Format this as a CSV row with no header: Priya Raghavan, teams plan, 14 seats, renewed"}
+{"tier":1,"task":"reformat","text":"Expand these abbreviations inline: The pt. was seen in the ER by Dr. Ng at approx. 3 p.m."}
+{"tier":1,"task":"reformat","text":"Convert to uppercase: please confirm receipt by end of day"}
+{"tier":1,"task":"closed_qa","text":"Context: Refunds are issued within 5 business days of approval. Approval takes up to 2 business days.\nQuestion: What is the maximum number of business days from request to refund?"}
+{"tier":1,"task":"closed_qa","text":"Context: The library is open 10am-6pm Tuesday through Saturday and closed Sunday and Monday.\nIs the library open on Monday?"}
+{"tier":1,"task":"closed_qa","text":"Based only on the text below, who signed the agreement?\nThe agreement was executed on 3 February and signed by Elena Marsh on behalf of Northgate Ltd."}
+{"tier":1,"task":"closed_qa","text":"Context: Standard shipping is free over $50. Express shipping is $12 flat.\nA customer orders $63 of goods with express shipping. What do they pay for shipping?"}
+{"tier":1,"task":"closed_qa","text":"Using the passage, what year did the merger complete?\nAfter two years of negotiation beginning in 2019, the merger completed in 2021."}
+{"tier":1,"task":"closed_qa","text":"Context: Seats in row 12 are exit-row seats and cannot be booked by passengers under 15.\nCan a 14-year-old book seat 12C?"}
+{"tier":1,"task":"closed_qa","text":"From the text: \"All returns require the original receipt.\" Does a return require a receipt?"}
+{"tier":1,"task":"closed_qa","text":"Context: Tier A support responds within 1 hour. Tier B within 8 hours. Tier C within 2 business days.\nWhat is the response time for Tier B?"}
+{"tier":1,"task":"closed_qa","text":"Given this menu, what is the price of the soup?\nSoup of the day .... 7.50\nCaesar salad ....... 11.00\nSteak frites ....... 24.00"}
+{"tier":1,"task":"closed_qa","text":"Context: The password must be at least 12 characters and include one number.\nIs \"greenhouse42\" long enough?"}
+{"tier":1,"task":"closed_qa","text":"Per the policy text below, how many days of notice are required?\nEmployees must provide 30 days written notice prior to resignation."}
+{"tier":1,"task":"closed_qa","text":"Context: Batch 771 passed inspection. Batch 772 failed on moisture content. Batch 773 was not tested.\nWhich batch failed?"}
+{"tier":1,"task":"lookup","text":"What is the capital of Portugal? One word."}
+{"tier":1,"task":"lookup","text":"How many days are in February in a leap year?"}
+{"tier":1,"task":"lookup","text":"What does the acronym API stand for?"}
+{"tier":1,"task":"lookup","text":"Spell out the number 1,204 in words."}
+{"tier":1,"task":"lookup","text":"What is the chemical symbol for potassium?"}
+{"tier":1,"task":"lookup","text":"Convert 5 kilometres to miles. Give the number only."}
+{"tier":1,"task":"lookup","text":"What is 15% of 200?"}
+{"tier":1,"task":"lookup","text":"Which is larger, 0.7 or 0.65?"}
+{"tier":1,"task":"lookup","text":"What day of the week comes after Wednesday?"}
+{"tier":1,"task":"lookup","text":"Give the ISO 3166 two-letter code for Japan."}
+{"tier":1,"task":"simple_transform","text":"Count the words in this sentence: The rain stopped just before the ceremony began."}
+{"tier":1,"task":"simple_transform","text":"Remove duplicates from this list, keeping the first occurrence: apple, pear, apple, fig, pear, plum"}
+{"tier":1,"task":"simple_transform","text":"Join these fragments into one sentence with correct punctuation: \"the shipment arrived\" \"two days late\" \"but undamaged\""}
+{"tier":1,"task":"simple_transform","text":"Fix the capitalisation and punctuation: we received your message and will reply shortly thanks"}
+{"tier":1,"task":"simple_transform","text":"Replace every instance of \"colour\" with \"color\": The colour swatch shows a colour we discontinued."}
+{"tier":1,"task":"simple_transform","text":"Trim this to its first sentence only: The system rebooted at 4am. No data was lost. Monitoring resumed at 4:15am."}
+{"tier":1,"task":"simple_transform","text":"Split this full name into first and last: Anneliese Vandenberg"}
+{"tier":1,"task":"simple_transform","text":"Output these numbers sorted descending: 14, 3, 88, 21, 7"}
+{"tier":1,"task":"simple_transform","text":"Write this ratio as a percentage: 3 out of 8"}
+{"tier":1,"task":"simple_transform","text":"Escape the double quotes in this string so it is valid JSON: She said \"ship it\" and left."}
+{"tier":1,"task":"boolean_check","text":"Does this string contain a digit? \"warehouse-north\""}
+{"tier":1,"task":"boolean_check","text":"Is this a valid email address? priya[at]vellum.io. Answer yes or no."}
+{"tier":1,"task":"boolean_check","text":"Are these two values equal? 0.50 and 0.5"}
+{"tier":1,"task":"boolean_check","text":"Is 91 a prime number? Yes or no."}
+{"tier":1,"task":"boolean_check","text":"Does the date 2025-02-30 exist? Answer yes or no."}
+{"tier":1,"task":"extraction","text":"Return the ticket ID from this subject line: [Re: #TKT-99120] Cannot log in on mobile"}
+{"tier":1,"task":"extraction","text":"What percentage is mentioned here? \"Churn improved to 4.2% in the second half.\""}
+{"tier":1,"task":"reformat","text":"Rewrite as a bulleted list:\nWe need three things from you: a signed form, proof of address, and a photo ID."}
+{"tier":1,"task":"closed_qa","text":"Context: Meeting rooms seat 6 (Aspen), 12 (Birch), and 20 (Cedar).\nWhich room seats 12?"}
+{"tier":1,"task":"lookup","text":"How many centimetres are in a metre?"}
+{"tier":1,"task":"simple_transform","text":"Convert this temperature to Fahrenheit and give only the number: 20 degrees Celsius."}
+{"tier":1,"task":"extraction","text":"From the following, list only the file names:\nModified: report_q3.pdf, notes.txt\nDeleted: old_budget.xlsx"}
+{"tier":1,"task":"reformat","text":"Put each of these on its own line: alpha; beta; gamma; delta"}
+{"tier":1,"task":"closed_qa","text":"Context: Only managers can approve expenses above 500 EUR.\nCan an analyst approve a 620 EUR expense?"}
+{"tier":1,"task":"extraction","text":"Give me the version number: \"Upgrade to release 4.11.2 before the cutoff.\""}
