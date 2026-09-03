@@ -1,0 +1,22 @@
+# Reverse proxy for the single Railway-exposed port -> two internal
+# processes (FastAPI on 8001, Streamlit on 8501) sharing one SQLite file.
+# Caddy proxies WebSocket upgrades transparently, which Streamlit's live
+# UI depends on -- that's the reason this is Caddy and not a hand-rolled
+# HTTP-only proxy.
+:{$PORT:8080} {
+	handle /v1/* {
+		reverse_proxy 127.0.0.1:8001
+	}
+	handle /health {
+		reverse_proxy 127.0.0.1:8001
+	}
+	handle /docs* {
+		reverse_proxy 127.0.0.1:8001
+	}
+	handle /openapi.json {
+		reverse_proxy 127.0.0.1:8001
+	}
+	handle {
+		reverse_proxy 127.0.0.1:8501
+	}
+}
